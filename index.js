@@ -72,6 +72,13 @@ export default class LibRaw {
 	}
 
 	/**
+	 * Retrieve the raw, undebayered sensor data (16-bit mosaic, no demosaicing).
+	 */
+	async rawImageData() {
+		return await this.runFn('rawImageData');
+	}
+
+	/**
      * Retrieve the embedded JPEG preview (Fast extraction)
      */
     async thumbnailData() {

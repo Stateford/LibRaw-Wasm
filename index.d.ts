@@ -527,6 +527,24 @@ export interface RawImageData {
 }
 
 /**
+ * Raw, undebayered sensor data returned by `rawImageData()`.
+ *
+ * `data` is the 16-bit mosaic straight from the sensor (no demosaicing applied).
+ * `width`/`height` are the visible image dimensions; `raw_width`/`raw_height`
+ * include the masked/border pixels, and `top_margin`/`left_margin` give the
+ * offset of the visible area within the raw frame.
+ */
+export interface RawSensorData {
+  raw_width: number;
+  raw_height: number;
+  top_margin: number;
+  left_margin: number;
+  width: number;
+  height: number;
+  data: Uint16Array;
+}
+
+/**
  * Thumbnail image data returned by `thumbnailData()`.
  */
 export interface ThumbnailImageData {
@@ -582,6 +600,11 @@ export default class LibRaw {
    * Fetch processed RAW image data for the opened file.
    */
   imageData(): Promise<LibRawImageData | undefined>;
+
+  /**
+   * Fetch the raw, undebayered sensor data (16-bit mosaic, no demosaicing).
+   */
+  rawImageData(): Promise<RawSensorData | undefined>;
 
   /**
    * Fetch the embedded thumbnail preview, when available.

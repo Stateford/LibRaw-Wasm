@@ -31,6 +31,10 @@ const imageData = await raw.imageData();
 console.log('Image data:', imageData);
 console.log('Image data length:', imageData.length);
 
+// Fetch the raw, undebayered sensor data (16-bit mosaic, no demosaicing)
+const rawImageData = await raw.rawImageData();
+console.log('Raw sensor data:', rawImageData); // { raw_width, raw_height, width, height, top_margin, left_margin, data: Uint16Array }
+
 ```
 
 # Settings

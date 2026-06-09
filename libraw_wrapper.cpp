@@ -963,6 +963,43 @@ public:
         return resultObj;
     }
 
+	// Returns the raw, undebayered sensor data (16-bit mosaic) without demosaicing.
+	val rawImageData() {
+		if (!processor_) {
+			return val::undefined();
+		}
+
+		// Unpack (but not dcraw_process) so we keep the raw mosaic
+		if (!isUnpacked) {
+			isUnpacked = true;
+			int ret = processor_->unpack();
+			if (ret != LIBRAW_SUCCESS) {
+				throw std::runtime_error("LibRaw: unpack() failed with code " + std::to_string(ret));
+			}
+		}
+
+		auto &raw = processor_->imgdata.rawdata;
+		auto &sizes = processor_->imgdata.sizes;
+
+		// Only single-channel ushort raw_image is supported here
+		if (!raw.raw_image) {
+			return val::undefined();
+		}
+
+		val resultObj = val::object();
+		resultObj.set("raw_height",  sizes.raw_height);
+		resultObj.set("raw_width",   sizes.raw_width);
+		resultObj.set("top_margin",  sizes.top_margin);
+		resultObj.set("left_margin", sizes.left_margin);
+		resultObj.set("height",      sizes.height);
+		resultObj.set("width",       sizes.width);
+
+		size_t pixelCount = static_cast<size_t>(sizes.raw_height) * static_cast<size_t>(sizes.raw_width);
+		resultObj.set("data", toJSTypedArray(16, pixelCount * 2, (uint8_t*)raw.raw_image));
+
+		return resultObj;
+	}
+
 private:
 	LibRaw* processor_ = nullptr;
     std::vector<uint8_t> buffer;
@@ -1219,5 +1256,6 @@ EMSCRIPTEN_BINDINGS(libraw_module) {
 		.function("open", &WASMLibRaw::open)
 		.function("metadata", &WASMLibRaw::metadata)
         .function("imageData", &WASMLibRaw::imageData)
+        .function("rawImageData", &WASMLibRaw::rawImageData)
 		.function("thumbnailData", &WASMLibRaw::thumbnailData);
 }
