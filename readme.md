@@ -1,3 +1,4 @@
+<sub>*Follow me on X [@ybouane](https://x.com/ybouane) — I'm building in public.*</sub>
 # LibRaw-Wasm
 A WebAssembly build of LibRaw, powered by Emscripten and leveraging Web Workers. This lets you decode and process RAW image files directly in the browser or in a Node.js environment supporting WebAssembly. With LibRaw-Wasm, you can extract metadata and obtain decoded image data from formats such as CR2, NEF, ARW, DNG, and more.
 
