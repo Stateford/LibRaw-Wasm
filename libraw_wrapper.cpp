@@ -949,9 +949,15 @@ public:
         val resultObj = val::object();
 
         resultObj.set("data", toJSTypedArray(8, img->data_size, img->data));
-        resultObj.set("width", img->width);
-        resultObj.set("height", img->height);
-		
+
+        // dcraw_make_mem_thumb() only fills width/height for bitmap thumbnails;
+        // for JPEG-passthrough it leaves them at 0, so fall back to the dimensions
+        // LibRaw parsed into the thumbnail struct during identify.
+        int thumbWidth  = img->width  ? img->width  : processor_->imgdata.thumbnail.twidth;
+        int thumbHeight = img->height ? img->height : processor_->imgdata.thumbnail.theight;
+        resultObj.set("width", thumbWidth);
+        resultObj.set("height", thumbHeight);
+
         std::string formatStr = "unknown";
         if (img->type == LIBRAW_IMAGE_JPEG) formatStr = "jpeg";
         else if (img->type == LIBRAW_IMAGE_BITMAP) formatStr = "bitmap";
@@ -962,6 +968,43 @@ public:
 
         return resultObj;
     }
+
+	// Returns the raw, undebayered sensor data (16-bit mosaic) without demosaicing.
+	val rawImageData() {
+		if (!processor_) {
+			return val::undefined();
+		}
+
+		// Unpack (but not dcraw_process) so we keep the raw mosaic
+		if (!isUnpacked) {
+			isUnpacked = true;
+			int ret = processor_->unpack();
+			if (ret != LIBRAW_SUCCESS) {
+				throw std::runtime_error("LibRaw: unpack() failed with code " + std::to_string(ret));
+			}
+		}
+
+		auto &raw = processor_->imgdata.rawdata;
+		auto &sizes = processor_->imgdata.sizes;
+
+		// Only single-channel ushort raw_image is supported here
+		if (!raw.raw_image) {
+			return val::undefined();
+		}
+
+		val resultObj = val::object();
+		resultObj.set("raw_height",  sizes.raw_height);
+		resultObj.set("raw_width",   sizes.raw_width);
+		resultObj.set("top_margin",  sizes.top_margin);
+		resultObj.set("left_margin", sizes.left_margin);
+		resultObj.set("height",      sizes.height);
+		resultObj.set("width",       sizes.width);
+
+		size_t pixelCount = static_cast<size_t>(sizes.raw_height) * static_cast<size_t>(sizes.raw_width);
+		resultObj.set("data", toJSTypedArray(16, pixelCount * 2, (uint8_t*)raw.raw_image));
+
+		return resultObj;
+	}
 
 private:
 	LibRaw* processor_ = nullptr;
@@ -1219,5 +1262,6 @@ EMSCRIPTEN_BINDINGS(libraw_module) {
 		.function("open", &WASMLibRaw::open)
 		.function("metadata", &WASMLibRaw::metadata)
         .function("imageData", &WASMLibRaw::imageData)
+        .function("rawImageData", &WASMLibRaw::rawImageData)
 		.function("thumbnailData", &WASMLibRaw::thumbnailData);
 }
