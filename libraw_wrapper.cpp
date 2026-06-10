@@ -949,9 +949,15 @@ public:
         val resultObj = val::object();
 
         resultObj.set("data", toJSTypedArray(8, img->data_size, img->data));
-        resultObj.set("width", img->width);
-        resultObj.set("height", img->height);
-		
+
+        // dcraw_make_mem_thumb() only fills width/height for bitmap thumbnails;
+        // for JPEG-passthrough it leaves them at 0, so fall back to the dimensions
+        // LibRaw parsed into the thumbnail struct during identify.
+        int thumbWidth  = img->width  ? img->width  : processor_->imgdata.thumbnail.twidth;
+        int thumbHeight = img->height ? img->height : processor_->imgdata.thumbnail.theight;
+        resultObj.set("width", thumbWidth);
+        resultObj.set("height", thumbHeight);
+
         std::string formatStr = "unknown";
         if (img->type == LIBRAW_IMAGE_JPEG) formatStr = "jpeg";
         else if (img->type == LIBRAW_IMAGE_BITMAP) formatStr = "bitmap";
