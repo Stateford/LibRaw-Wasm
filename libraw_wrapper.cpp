@@ -33,6 +33,7 @@ public:
 		}
         // Release previous values, if any
         processor_->recycle();
+        isUnpacked = false;
 
 		applySettings(settings);
 
@@ -94,7 +95,7 @@ public:
 		}
 		gpsData.set("longitude", longitudeArr);
 		gpsData.set("altitude", processor_->imgdata.other.parsed_gps.altitude);
-			
+
 		meta.set("gps_data", gpsData);
 
 		// Thumbnail info
@@ -110,7 +111,7 @@ public:
 			// --------------------------------------------------------------------
 			const libraw_colordata_t &c = processor_->imgdata.color;
 			val colorData = val::object();
-			
+
 			colorData.set("black",		 c.black);
 			colorData.set("data_maximum",  c.data_maximum);
 			colorData.set("maximum",	   c.maximum);
@@ -258,7 +259,7 @@ public:
 				canonObj.set("Quality",			   cCanon.Quality);
 				canonObj.set("CanonLog",			  cCanon.CanonLog);
 
-				
+
 				{
 					val arr = val::array();
 					for (int i = 0; i < 2; i++) {
@@ -318,11 +319,11 @@ public:
 							cNikon.FlashExposureBracketValue[3]);
 
 				nikonObj.set("FlashMode",				(int)cNikon.FlashMode);
-				nikonObj.set("FlashExposureCompensation2", 
+				nikonObj.set("FlashExposureCompensation2",
 													(int)cNikon.FlashExposureCompensation2);
-				nikonObj.set("FlashExposureCompensation3", 
+				nikonObj.set("FlashExposureCompensation3",
 													(int)cNikon.FlashExposureCompensation3);
-				nikonObj.set("FlashExposureCompensation4", 
+				nikonObj.set("FlashExposureCompensation4",
 													(int)cNikon.FlashExposureCompensation4);
 				nikonObj.set("FlashSource",			 (int)cNikon.FlashSource);
 				nikonObj.set("FlashFirmware0",		  (int)cNikon.FlashFirmware[0]);
@@ -885,7 +886,7 @@ public:
 				p1Obj.set("SystemModel",	std::string(cP1.SystemModel));
 
 				meta.set("p1", p1Obj);
-			}	
+			}
 		}
 		return meta;
 	}
@@ -932,7 +933,7 @@ public:
 
 		return resultObj;
 	}
-    
+
     val thumbnailData() {
 		if (!processor_) return val::undefined();
 
@@ -943,7 +944,7 @@ public:
 
         // Get thumbnail data structure
         libraw_processed_image_t *img = processor_->dcraw_make_mem_thumb();
-        
+
         if (!img) return val::undefined();
 
         val resultObj = val::object();
@@ -961,9 +962,9 @@ public:
         std::string formatStr = "unknown";
         if (img->type == LIBRAW_IMAGE_JPEG) formatStr = "jpeg";
         else if (img->type == LIBRAW_IMAGE_BITMAP) formatStr = "bitmap";
-        
+
         resultObj.set("format", formatStr);
-        
+
         LibRaw::dcraw_clear_mem(img);
 
         return resultObj;
@@ -1204,7 +1205,7 @@ private:
 
         return out;
 	}
-    
+
     val toJSTypedArray(size_t bits, size_t data_size, uint8_t *data) {
         if (bits == 16) {
             unsigned length = (unsigned)data_size / 2;
@@ -1221,7 +1222,7 @@ private:
             return typedArray;
         }
     }
-    
+
 	void setStringMember(char*& dest, const std::string& value) {
 		if (dest) {
 			delete[] dest;
