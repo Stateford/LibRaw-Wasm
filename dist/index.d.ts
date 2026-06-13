@@ -230,7 +230,6 @@ export interface ColorData {
   profile_length: number;
   dng_color: DngColor[];
   dng_levels: DngLevels;
-  [key: string]: unknown;
 }
 
 /**
