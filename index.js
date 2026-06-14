@@ -58,7 +58,8 @@ export default class LibRaw {
 			metadata.desc = String(metadata.desc).trim();
 		}
 		if (metadata?.hasOwnProperty('timestamp')) {
-			metadata.timestamp = new Date(metadata.timestamp);
+			// LibRaw's timestamp is a time_t in epoch seconds; JS Date expects milliseconds.
+			metadata.timestamp = new Date(metadata.timestamp * 1000);
 		}
 		return metadata;
 	}
