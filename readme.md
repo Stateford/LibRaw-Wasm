@@ -92,6 +92,47 @@ console.log('Raw sensor data:', rawImageData); // { raw_width, raw_height, width
 - **Performance:** Decoding large RAW files in the browser can be CPU-intensive.
 - **Memory:** WebAssembly modules can allocate a significant amount of memory. Check your environment’s limits if you work with very large files.
 
+## Troubleshooting
+
+### Webpack/Next.js: "Circular dependency between chunks with runtime (..., em-pthread, webpack)"
+
+When bundling with webpack (including Next.js), the build may print:
+
+```
+⚠ Compiled with warnings
+
+Circular dependency between chunks with runtime
+(<...>_libraw-wasm_dist_worker_js, em-pthread, webpack)
+This prevents using hashes of each other and should be avoided.
+```
+
+This warning is **benign** — decoding works correctly. It happens because the WebAssembly module is compiled with pthreads (LibRaw's OpenMP, for multi-threaded decoding). With modern Emscripten, the pthread worker (`em-pthread`) is the generated glue file itself, which both spawns and *is* that worker — a self-reference webpack flags as a chunk cycle. The only effect is that the affected chunks can't use each other's content hashes (slightly weaker long-term caching); there is no runtime breakage.
+
+Since the warning originates from the consumer's bundler chunking, silence it there. In `next.config.js`:
+
+```javascript
+/** @type {import('next').NextConfig} */
+module.exports = {
+	webpack: (config) => {
+		config.ignoreWarnings = [
+			...(config.ignoreWarnings || []),
+			{ message: /Circular dependency between chunks with runtime/ },
+		];
+		return config;
+	},
+};
+```
+
+Or for a plain webpack config:
+
+```javascript
+module.exports = {
+	ignoreWarnings: [{ message: /Circular dependency between chunks with runtime/ }],
+};
+```
+
+Vite/Rollup/esbuild consumers are unaffected and don't emit this warning.
+
 ## Local development
  - If you're making changes in the CPP wrapper, launch `compileLibraw.sh`
  - If you're launching it on MacOS, make sure that emscripten is installed (e.g. `brew install emscripten`) + build dependencies are insalled (e.g. `brew install autoconf automake libtool`)
