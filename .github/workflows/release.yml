@@ -31,9 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # No registry-url: that writes an .npmrc with always-auth=true + an empty
-          # token, which blocks OIDC trusted publishing. npm defaults to the public
-          # registry and uses OIDC when id-token:write + a Trusted Publisher exist.
+          registry-url: 'https://registry.npmjs.org' # required for OIDC trusted publishing
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool
